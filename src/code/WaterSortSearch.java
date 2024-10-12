@@ -28,11 +28,12 @@ public class WaterSortSearch extends GenericSearch {
             bottles = Arrays.copyOfRange(bottles, 2, bottles.length);
         }//fdf
         for (String bottle : bottles) {
-            Set<Character> uniqueColors = new HashSet<>();
-            for (char layer : bottle.toCharArray()) {
-                if (layer != 'e') { // e means empty
+            Set<String> uniqueColors = new HashSet<>();
+            String[] layers = bottle.split(",");
+            for (String layer : layers) {
+                if (!layer.equals("e") && !layer.equals(",")) { // e means empty
                     uniqueColors.add(layer);
-                    System.out.println(uniqueColors);
+                   // System.out.println(uniqueColors);
                 }
             }
             if (uniqueColors.size() > 1) { // More than one color means unsolved bottle
@@ -159,6 +160,7 @@ public class WaterSortSearch extends GenericSearch {
     public static void main(String[] args) {
         // Example initial state: 5 bottles, 4 layers each, different colors
         String initialState = "5;4;b,y,r,b;b,y,r,r;y,r,b,y;e,e,e,e;e,e,e,e;";
+       // String initialState = "5;4;y,y,y,y;b,b,b,b;r,r,r,r;e,e,e,e;e,e,e,e;";
         
         WaterSortSearch waterSortSearch = new WaterSortSearch(initialState);
 

@@ -37,7 +37,7 @@ public abstract class GenericSearch {
             if (isGoal(node.getState())) {
                 return node; // Goal reached
             }
-            
+            System.out.println(node.getState());
             explored.add(node.getState());
 
             for (Node child : expand(node)) {
