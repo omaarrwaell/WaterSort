@@ -12,12 +12,27 @@ public class WaterSortSearch extends GenericSearch {
     @Override
     protected boolean isGoal(String state) {
         // Parse state and check if each bottle has only one color
-        String[] bottles = state.split(";"); //fdf
+        String[] bottles = state.split(";");
+        boolean firstTwoAreNumbers = true;
+        for (int i = 0; i < 2; i++) {
+            try {
+                Integer.parseInt(bottles[i]); // Try to parse as integer
+            } catch (NumberFormatException e) {
+                firstTwoAreNumbers = false; // If parsing fails, set to false
+                break; // No need to check further
+            }
+        }
+
+        // Remove the first two elements only if they are numbers
+        if (firstTwoAreNumbers) {
+            bottles = Arrays.copyOfRange(bottles, 2, bottles.length);
+        }//fdf
         for (String bottle : bottles) {
             Set<Character> uniqueColors = new HashSet<>();
             for (char layer : bottle.toCharArray()) {
                 if (layer != 'e') { // e means empty
                     uniqueColors.add(layer);
+                    System.out.println(uniqueColors);
                 }
             }
             if (uniqueColors.size() > 1) { // More than one color means unsolved bottle
@@ -35,6 +50,21 @@ public class WaterSortSearch extends GenericSearch {
         
         // Parse the current state into bottle layers
         String[] bottles = currentState.split(";");
+        boolean firstTwoAreNumbers = true;
+        for (int i = 0; i < 2; i++) {
+            try {
+                Integer.parseInt(bottles[i]); // Try to parse as integer
+            } catch (NumberFormatException e) {
+                firstTwoAreNumbers = false; // If parsing fails, set to false
+                break; // No need to check further
+            }
+        }
+
+        // Remove the first two elements only if they are numbers
+        if (firstTwoAreNumbers) {
+            bottles = Arrays.copyOfRange(bottles, 2, bottles.length);
+        }
+        
         int numBottles = bottles.length;
         
         // Loop over every possible pair of bottles (i, j) where i pours into j
@@ -44,7 +74,7 @@ public class WaterSortSearch extends GenericSearch {
                     // Generate new state after pouring
                     String newState = pour(bottles, i, j);
                     String action = "pour(" + i + "," + j + ")";
-                    Node child = new Node(newState, node, action, node.getCost() + 1);
+                    Node child = new Node(newState, node, action, node.getCost() + 1,node.getDepth()+1);
                     children.add(child);
                 }
             }
@@ -78,7 +108,7 @@ public class WaterSortSearch extends GenericSearch {
     // Helper methods: getTopLayer, hasSpace, removeTopLayer, addTopLayer
     private char getTopLayer(String bottle) {
         for (char layer : bottle.toCharArray()) {
-            if (layer != 'e') {
+            if (layer != 'e' && layer !=',') {
                 return layer; // Return first non-empty layer
             }
         }
@@ -90,24 +120,41 @@ public class WaterSortSearch extends GenericSearch {
     }
 
     private String removeTopLayer(String bottle) {
-        int lastIndex = bottle.lastIndexOf('e') - 1; // Find the topmost non-empty layer
-        if (lastIndex < 0) {
-            return bottle; // If all layers are empty, return as is
+        // Split the bottle string by commas to separate the layers
+        String[] layers = bottle.split(",");
+
+        // Find the index of the first non-empty layer
+        int topIndex = 0;
+        while (topIndex < layers.length && layers[topIndex].equals("e")) {
+            topIndex++; // Move right until we find a non-empty layer
         }
-        char[] layers = bottle.toCharArray();
-        layers[lastIndex] = 'e'; // Set top layer to empty
-        return new String(layers);
+
+        // If all layers are empty, return the bottle as is
+        if (topIndex >= layers.length) {
+            return bottle;
+        }
+
+        // Set the top layer to empty (replace the first non-empty layer with 'e')
+        layers[topIndex] = "e"; // Set the identified layer to empty
+
+        // Join the layers back into a single string with commas
+        return String.join(",", layers);
     }
 
     private String addTopLayer(String bottle, char layer) {
-        int firstEmpty = bottle.indexOf('e'); // Find the first empty space
-        if (firstEmpty == -1) {
-            return bottle; // If no empty space, return as is
+        // Find the last empty space
+        int lastEmpty = bottle.lastIndexOf('e'); // Get the last index of 'e'
+        
+        // If no empty space is found, return the bottle as is
+        if (lastEmpty == -1) {
+            return bottle; 
         }
+        
         char[] layers = bottle.toCharArray();
-        layers[firstEmpty] = layer; // Add the layer to the first empty space
-        return new String(layers);
+        layers[lastEmpty] = layer; // Add the layer to the last empty space
+        return new String(layers); // Return the new bottle configuration as a string
     }
+
     
     public static void main(String[] args) {
         // Example initial state: 5 bottles, 4 layers each, different colors

@@ -8,13 +8,15 @@ public class Node {
     private String state;
     private Node parent;
     private String action;
+    private int depth;
     private int cost;
 
-    public Node(String state, Node parent, String action, int cost) {
+    public Node(String state, Node parent, String action, int cost,int depth) {
         this.state = state;
         this.parent = parent;
         this.action = action;
         this.cost = cost;
+        this.depth = depth;
     }
 
     public String getState() {
@@ -32,6 +34,9 @@ public class Node {
     public int getCost() {
         return cost;
     }
+    public int getDepth() {
+    	return depth;
+    }
 
     // Trace the path back from the current node to the root (initial state)
     public List<String> getPath() {
@@ -43,5 +48,14 @@ public class Node {
         }
         Collections.reverse(path);
         return path;
+    }
+    @Override
+    public String toString() {
+        return "Node{" +
+                "state='" + state + '\'' +
+                ", action='" + action + '\'' +
+                ", cost=" + cost +
+                ", depth=" + depth +
+                '}';
     }
 }
