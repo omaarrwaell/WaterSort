@@ -12,7 +12,7 @@ public class WaterSortSearch extends GenericSearch {
     @Override
     protected boolean isGoal(String state) {
         // Parse state and check if each bottle has only one color
-        String[] bottles = state.split(";");
+        String[] bottles = state.split(";"); //fdf
         for (String bottle : bottles) {
             Set<Character> uniqueColors = new HashSet<>();
             for (char layer : bottle.toCharArray()) {
