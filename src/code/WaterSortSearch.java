@@ -1,7 +1,7 @@
 package code;
 
 import java.util.*;
-
+import code.GenericSearch;
 public class WaterSortSearch extends GenericSearch {
 
     public WaterSortSearch(String initialState) {
@@ -9,8 +9,8 @@ public class WaterSortSearch extends GenericSearch {
     }
 
     // Goal test: check if all bottles have a single color or are empty
-    @Override
-    protected boolean isGoal(String state) {
+    
+    public static boolean isGoal(String state) {
         // Parse state and check if each bottle has only one color
         String[] bottles = state.split(";");
         boolean firstTwoAreNumbers = true;
@@ -53,8 +53,8 @@ public class WaterSortSearch extends GenericSearch {
     }
 
     // Expand method: generate all possible pour actions
-    @Override
-    protected List<Node> expand(Node node) {
+   
+    public static List<Node> expand(Node node) {
         List<Node> children = new ArrayList<>();
         String currentState = node.getState();
         
@@ -80,20 +80,26 @@ public class WaterSortSearch extends GenericSearch {
         // Loop over every possible pair of bottles (i, j) where i pours into j
         for (int i = 0; i < numBottles; i++) {
             for (int j = 0; j < numBottles; j++) {
-                if (i != j && canPour(bottles[i], bottles[j])) {
-                    // Generate new state after pouring
-                    String newState = pour(bottles, i, j);
-                    String action = "pour(" + i + "," + j + ")";
-                    Node child = new Node(newState, node, action, node.getCost() + 1,node.getDepth()+1);
-                    children.add(child);
-                }
+                try {
+					if (i != j && canPour(bottles[i], bottles[j])) {
+					    // Generate new state after pouring
+					    Map<String, String> result = pour(bottles, i, j);
+					    String newState = result.get("newState");
+					    String action = "pour_" + i + "_" + j ;
+					    Node child = new Node(newState, node, action, node.getCost() + Integer.parseInt(result.get("cost")),node.getDepth()+1);
+					    children.add(child);
+					}
+				} catch (NumberFormatException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
             }
         }
         return children;
     }
 
     // Check if we can pour from bottle i to bottle j
-    private boolean canPour(String bottleI, String bottleJ) {
+    private static boolean canPour(String bottleI, String bottleJ) {
         char topLayerI = getTopLayer(bottleI);
         char topLayerJ = getTopLayer(bottleJ);
 
@@ -102,21 +108,73 @@ public class WaterSortSearch extends GenericSearch {
     }
 
     // Simulate the pouring from bottle i to j, return the new state
-    private String pour(String[] bottles, int i, int j) {
+    private static Map<String, String> pour(String[] bottles, int i, int j) {
         String[] newBottles = Arrays.copyOf(bottles, bottles.length);
         char topLayerI = getTopLayer(newBottles[i]);
         
+        int layersPoured = 0; // Track the number of layers poured
+        int totalLayersPoured = 0; // Store total layers poured for the cost
+
         // Transfer as much as possible from i to j
         while (canPour(newBottles[i], newBottles[j])) {
-            newBottles[i] = removeTopLayer(newBottles[i]);
-            newBottles[j] = addTopLayer(newBottles[j], topLayerI);
+            // Count how many layers can be poured in this action
+            int availableLayersToPour = countPourableLayers(newBottles[i]);
+            int emptySpacesInBottleJ = countEmptySpaces(newBottles[j]);
+            
+            // Calculate the actual number of layers to pour, which is the minimum between available layers and empty spaces
+            layersPoured = Math.min(availableLayersToPour, emptySpacesInBottleJ);
+            
+            // Pour the layers and update the bottles
+            for (int k = 0; k < layersPoured; k++) {
+                newBottles[i] = removeTopLayer(newBottles[i]);
+                newBottles[j] = addTopLayer(newBottles[j], topLayerI);
+            }
+            
+            // Accumulate the layers poured in this action
+            totalLayersPoured += layersPoured;
         }
 
-        return String.join(";", newBottles);
+        // Update the cost of the node based on the layers poured
+        int newCost = totalLayersPoured;
+
+        // Create a HashMap to store the new state and cost
+        Map<String, String> result = new HashMap<>();
+        result.put("newState", String.join(";", newBottles)); // Add new state to the HashMap
+        result.put("cost", newCost+""); // Add the cost to the HashMap
+
+        // Return the HashMap with both the new state and the cost
+        return result;
+    }
+
+    // Count the number of pourable layers from a bottle (same topmost color)
+    private static int countPourableLayers(String bottle) {
+        char topLayer = getTopLayer(bottle);
+        int count = 0;
+        for (char layer : bottle.toCharArray()) {
+            if (layer == topLayer) {
+                count++;
+            } else if (layer == 'e' || layer == ',') {
+                continue;
+            } else {
+                break; // Stop counting when the topmost different color is found
+            }
+        }
+        return count;
+    }
+
+    // Count how many empty spaces ('e') are in a bottle
+    private static int countEmptySpaces(String bottle) {
+        int count = 0;
+        for (char layer : bottle.toCharArray()) {
+            if (layer == 'e') {
+                count++;
+            }
+        }
+        return count;
     }
 
     // Helper methods: getTopLayer, hasSpace, removeTopLayer, addTopLayer
-    private char getTopLayer(String bottle) {
+    private static char getTopLayer(String bottle) {
         for (char layer : bottle.toCharArray()) {
             if (layer != 'e' && layer !=',') {
                 return layer; // Return first non-empty layer
@@ -125,11 +183,11 @@ public class WaterSortSearch extends GenericSearch {
         return 'e'; // If empty, return 'e'
     }
 
-    private boolean hasSpace(String bottle) {
+    private static boolean hasSpace(String bottle) {
         return bottle.indexOf('e') != -1; // Check if there's an empty space in the bottle
     }
 
-    private String removeTopLayer(String bottle) {
+    private static String removeTopLayer(String bottle) {
         // Split the bottle string by commas to separate the layers
         String[] layers = bottle.split(",");
 
@@ -151,7 +209,7 @@ public class WaterSortSearch extends GenericSearch {
         return String.join(",", layers);
     }
 
-    private String addTopLayer(String bottle, char layer) {
+    private static String addTopLayer(String bottle, char layer) {
         // Find the last empty space
         int lastEmpty = bottle.lastIndexOf('e'); // Get the last index of 'e'
         
@@ -168,19 +226,23 @@ public class WaterSortSearch extends GenericSearch {
     
     public static void main(String[] args) {
         // Example initial state: 5 bottles, 4 layers each, different colors
-        String initialState = "5;4;b,y,r,b;b,y,r,r;y,r,b,y;e,e,e,e;e,e,e,e;";
+       // String initialState = "5;4;b,y,r,b;b,y,r,r;y,r,b,y;e,e,e,e;e,e,e,e;";
        // String initialState = "5;4;e,e,e,e;r,r,r,r;e,e,b,y;e,b,b,b;e,y,y,y;";
-        
+        String initialState ="3;4;r,y,r,y;y,r,y,r;e,e,e,e;";
         WaterSortSearch waterSortSearch = new WaterSortSearch(initialState);
 
         // Test BFS
-        Node solution = waterSortSearch.bfs();
-        if (solution != null) {
-            System.out.println("Solution found with BFS: " + solution.getPath());
-            System.out.println("Cost: " + solution.getCost());
-        } else {
-            System.out.println("No solution found with BFS.");
-        }
+        String solution = WaterSortSearch.solve(initialState, "DF", true);
+        System.out.println(solution);
+       //Node solution = waterSortSearch.bfs();
+       // Node solution = waterSortSearch.dfs();
+    //    if (solution != null) {
+      //      System.out.println("Solution found with BFS: " + solution.getPath());
+      //      System.out.println("Cost: " + solution.getCost());
+      //      System.out.println("Explored: "+ explored.size());
+     //   } else {
+     //       System.out.println("No solution found with BFS.");
+   //     }
 
         // You can similarly test DFS, UCS, A*, etc.
     }
