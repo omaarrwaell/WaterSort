@@ -4,7 +4,7 @@ import java.util.*;
 
 public abstract class GenericSearch {
     protected String initialState;
-
+    public int bottleCapacity ;
     public GenericSearch(String initialState) {
         this.initialState = initialState;
     }
@@ -20,7 +20,8 @@ public abstract class GenericSearch {
         Deque<Node> frontier = new LinkedList<>(); // Deque supports both stack and queue operations
         Set<String> explored = new HashSet<>();
         frontier.add(new Node(initialState, null, null, 0, 0)); // Start with the initial state
-
+        String[] split = initialState.split(";");
+        bottleCapacity=Integer.parseInt(split[1]);
         while (!frontier.isEmpty()) {
             Node node;
             
@@ -33,11 +34,11 @@ public abstract class GenericSearch {
             } else {
                 throw new IllegalArgumentException("Invalid strategy: " + strategy);
             }
-
+            System.out.println(node.getState());
             if (isGoal(node.getState())) {
                 return node; // Goal reached
             }
-            System.out.println(node.getState());
+           
             explored.add(node.getState());
 
             for (Node child : expand(node)) {
