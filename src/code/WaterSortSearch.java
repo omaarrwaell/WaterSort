@@ -226,13 +226,13 @@ public class WaterSortSearch extends GenericSearch {
     
     public static void main(String[] args) {
         // Example initial state: 5 bottles, 4 layers each, different colors
-       // String initialState = "5;4;b,y,r,b;b,y,r,r;y,r,b,y;e,e,e,e;e,e,e,e;";
+        String initialState = "5;4;b,y,r,b;b,y,r,r;y,r,b,y;e,e,e,e;e,e,e,e;";
        // String initialState = "5;4;e,e,e,e;r,r,r,r;e,e,b,y;e,b,b,b;e,y,y,y;";
-        String initialState ="3;4;r,y,r,y;y,r,y,r;e,e,e,e;";
+       // String initialState ="3;4;r,y,r,y;y,r,y,r;e,e,e,e;";
         WaterSortSearch waterSortSearch = new WaterSortSearch(initialState);
 
         // Test BFS
-        String solution = WaterSortSearch.solve(initialState, "ID", true);
+        String solution = WaterSortSearch.solve(initialState, "AS2", true);
         System.out.println(solution);
        //Node solution = waterSortSearch.bfs();
        // Node solution = waterSortSearch.dfs();
