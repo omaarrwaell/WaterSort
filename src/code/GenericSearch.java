@@ -90,8 +90,57 @@ public abstract class GenericSearch {
         }
         return null; // Return null if no solution found at this depth
     }
+    private static int heuristic1(String state) {
+        String[] bottles = state.split(";");
+        int mixedBottles = 0;
+        
+        for (int i = 0; i < bottles.length; i++) {  // Skip first two (bottle count, capacity)
+            Set<Character> colors = new HashSet<>();
+            for (char layer : bottles[i].toCharArray()) {
+                if (layer != 'e' && layer != ',') {
+                    colors.add(layer);
+                }
+            }
+            if (colors.size() > 1) {
+                mixedBottles++;  // This bottle has more than one color
+            }
+        }
+        return mixedBottles;
+    }
+    private static int heuristic2(String state) {
+        String[] bottles = state.split(";");
+        int movesRequired = 0;
+
+        for (int i = 2; i < bottles.length; i++) {  // Skip first two (bottle count, capacity)
+            Set<Character> colors = new HashSet<>();
+            for (char layer : bottles[i].toCharArray()) {
+                if (layer != 'e' && layer != ',') {
+                    colors.add(layer);
+                }
+            }
+            // If more than one color, it will require moves to empty it
+            if (colors.size() > 1) {
+                movesRequired++;
+            }
+        }
+        return movesRequired;
+    }
+
+    public static void displayMemoryUsage(String message) {
+        Runtime runtime = Runtime.getRuntime();
+        long totalMemory = runtime.totalMemory(); // Total memory allocated to JVM
+        long freeMemory = runtime.freeMemory();   // Free memory in JVM
+        long usedMemory = totalMemory - freeMemory;  // Used memory
+        
+        System.out.println(message);
+        System.out.println("Used memory: " + usedMemory / (1024 * 1024) + " MB");
+        System.out.println("Free memory: " + freeMemory / (1024 * 1024) + " MB");
+        System.out.println("Total memory: " + totalMemory / (1024 * 1024) + " MB");
+        System.out.println("------------------------------------");
+    }
 
     public static Node search(String initialState1,String strategy,Boolean visualise) {
+    	 displayMemoryUsage("Before search starts:");
         Deque<Node>  dequeFrontier = null;  // Use for BFS and DFS
         PriorityQueue<Node> pqFrontier = null;  // Use for UCS
         initialState = initialState1;
@@ -125,6 +174,21 @@ public abstract class GenericSearch {
             pqFrontier = new PriorityQueue<>(Comparator.comparingInt(node -> node.getCost() + heuristic_AS2(node)));
             pqFrontier.add(new Node(initialState, null, null, 0, 0)); // Start with the initial state
         }
+        else if (strategy.equals("GR1")) {
+            // Greedy Search using the combined heuristic (H1 + H2)
+        	 pqFrontier = new PriorityQueue<>((node1, node2) -> {
+                 // Compare nodes based on Heuristic 1
+                 return Integer.compare(heuristic1(node1.getState()), heuristic1(node2.getState()));
+             });
+            pqFrontier.add(new Node(initialState, null, null, 0, 0)); // Start with the initial state
+        } else if (strategy.equals("GR2")) {
+            // Greedy Search using the combined heuristic (H1 + H2)
+        	 pqFrontier = new PriorityQueue<>((node1, node2) -> {
+                 // Compare nodes based on Heuristic 1
+                 return Integer.compare(heuristic2(node1.getState()), heuristic2(node2.getState()));
+             });
+            pqFrontier.add(new Node(initialState, null, null, 0, 0)); // Start with the initial state
+        } 
         else {
             throw new IllegalArgumentException("Invalid strategy: " + strategy);
         }
@@ -147,12 +211,13 @@ public abstract class GenericSearch {
 
             // Print the state for debugging purposes (optional)
             System.out.println(node.getState());
-
+            displayMemoryUsage("During search (current node: " + node.getState() + "):");
             // Check if the goal state is reached
             if (WaterSortSearch.isGoal(node.getState())) {
-                initialState="";
-                bottleCapacity=0;
-                count=0;
+            	initialState="";
+            	bottleCapacity=0;
+            	displayMemoryUsage("After goal is reached:");
+            	count =0;
                 return node; // Goal reached
             }
             List<Node> children = WaterSortSearch.expand(node);
@@ -175,6 +240,10 @@ public abstract class GenericSearch {
                         dequeFrontier.addLast(child);  // BFS (FIFO behavior)
                     } else  if(strategy.equals("UC")){
                         pqFrontier.add(child);  // UCS (Priority Queue behavior)
+                    }else if (strategy.equals("GR1")) {
+                        pqFrontier.add(child);  // Greedy Search (Priority Queue based on combined heuristic)
+                    }else if (strategy.equals("GR2")) {
+                        pqFrontier.add(child);  // Greedy Search (Priority Queue based on combined heuristic)
                     }
                     else if(strategy.equals("AS1")){
                         pqFrontier.add(child); 
@@ -198,8 +267,7 @@ public abstract class GenericSearch {
     	        String path = String.join(",", solution.getPath());  // Join the path actions with arrows
     	        int cost = solution.getCost();
     	        int exploredSize = explored.size();
-                explored=new HashSet<>();
-
+    	        explored= new HashSet<>();
 
     	        // Return a single string with values separated by semicolons
     	        return path + "; " + cost + "; " + exploredSize;
