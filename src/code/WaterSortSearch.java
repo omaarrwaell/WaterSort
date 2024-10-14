@@ -232,7 +232,7 @@ public class WaterSortSearch extends GenericSearch {
         WaterSortSearch waterSortSearch = new WaterSortSearch(initialState);
 
         // Test BFS
-        String solution = WaterSortSearch.solve(initialState, "DF", true);
+        String solution = WaterSortSearch.solve(initialState, "ID", true);
         System.out.println(solution);
        //Node solution = waterSortSearch.bfs();
        // Node solution = waterSortSearch.dfs();

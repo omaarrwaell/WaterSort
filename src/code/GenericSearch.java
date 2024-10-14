@@ -64,24 +64,65 @@ public abstract class GenericSearch {
         return null; // No solution found
     }
 */
+ // Helper method for depth-limited DFS
+    private static Node depthLimitedSearch(Node node, int limit) {
+        // Check if the current node is the goal
+        if (WaterSortSearch.isGoal(node.getState())) {
+            return node; // Goal reached
+        }
+         if(node.getAction()==null) {
+        	 explored.add(node.getState());
+         }
+        // If depth limit is reached, return null
+        if (node.getDepth() >= limit) {
+            return null;
+        }
+
+        // Expand the current node
+        for (Node child : WaterSortSearch.expand(node)) {
+            if (!explored.contains(child.getState())) {
+                explored.add(child.getState());  // Mark the child as explored
+                Node result = depthLimitedSearch(child, limit);  // Recursive call with the same depth limit
+                if (result != null) {
+                    return result;  // Return the result if goal is found
+                }
+            }
+        }
+        return null; // Return null if no solution found at this depth
+    }
+
     public static Node search(String initialState1,String strategy,Boolean visualise) {
         Deque<Node>  dequeFrontier = null;  // Use for BFS and DFS
         PriorityQueue<Node> pqFrontier = null;  // Use for UCS
         initialState = initialState1;
+        String[] split = initialState.split(";");
+        bottleCapacity = Integer.parseInt(split[1]);
         // Initialize the frontier based on the search strategy
+      
         if (strategy.equals("BF") || strategy.equals("DF")) {
             dequeFrontier = new LinkedList<>();
             dequeFrontier.add(new Node(initialState, null, null, 0, 0)); // Start with the initial state
         } else if (strategy.equals("UC")) {
             pqFrontier = new PriorityQueue<>(Comparator.comparingInt(Node::getCost));
             pqFrontier.add(new Node(initialState, null, null, 0, 0)); // Start with the initial state
-        } else {
+        }   else if (strategy.equals("ID")) {
+            // For IDS, we'll repeatedly run depth-limited search with increasing depth
+            int depthLimit = 0;  // Start with depth 0
+            while (true) {
+                explored.clear();  // Clear explored set between depth limits
+                Node result = depthLimitedSearch(new Node(initialState, null, null, 0, 0), depthLimit);
+                if (result != null) {
+                    return result;  // Return the solution if found
+                }
+                depthLimit++;  // Increase the depth limit for the next iteration
+            }
+        }
+        else {
             throw new IllegalArgumentException("Invalid strategy: " + strategy);
         }
 
         // Extract bottle capacity from the initial state
-        String[] split = initialState.split(";");
-        bottleCapacity = Integer.parseInt(split[1]);
+      
 
         // Main search loop
         while ((dequeFrontier != null && !dequeFrontier.isEmpty()) || (pqFrontier != null && !pqFrontier.isEmpty())) {
@@ -116,7 +157,7 @@ public abstract class GenericSearch {
                 }
             }
             // Expand the node and add its children to the frontier
-            for (Node child : WaterSortSearch.expand(node)) {
+            for (Node child : children) {
                 if (!explored.contains(child.getState())) {
                     // Add the child to the frontier based on the strategy
                     if (strategy.equals("BF")) {
