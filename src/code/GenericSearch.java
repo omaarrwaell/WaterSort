@@ -4,7 +4,7 @@ import java.util.*;
 
 public abstract class GenericSearch {
     protected static String initialState ="";
-    public static int  bottleCapacity ;
+    
     public static  Set<String> explored = new HashSet<>();
     public static int count =0;
     public GenericSearch(String initialState) {
@@ -65,9 +65,9 @@ public abstract class GenericSearch {
     }
 */
  // Helper method for depth-limited DFS
-    private static Node depthLimitedSearch(Node node, int limit) {
+    private static Node depthLimitedSearch(Node node, int limit,WaterSearchProblem problem) {
         // Check if the current node is the goal
-        if (WaterSortSearch.isGoal(node.getState())) {
+        if (problem.isGoal(node.getState())) {
             return node; // Goal reached
         }
          if(node.getAction()==null) {
@@ -79,10 +79,10 @@ public abstract class GenericSearch {
         }
 
         // Expand the current node
-        for (Node child : WaterSortSearch.expand(node)) {
+        for (Node child : problem.expand(node)) {
             if (!explored.contains(child.getState())) {
                 explored.add(child.getState());  // Mark the child as explored
-                Node result = depthLimitedSearch(child, limit);  // Recursive call with the same depth limit
+                Node result = depthLimitedSearch(child, limit,problem);  // Recursive call with the same depth limit
                 if (result != null) {
                     return result;  // Return the result if goal is found
                 }
@@ -139,13 +139,13 @@ public abstract class GenericSearch {
         System.out.println("------------------------------------");
     }
 
-    public static Node search(String initialState1,String strategy,Boolean visualise) {
-    	 displayMemoryUsage("Before search starts:");
+    public static Node search(WaterSearchProblem problem,String strategy) {
+    	// displayMemoryUsage("Before search starts:");
         Deque<Node>  dequeFrontier = null;  // Use for BFS and DFS
         PriorityQueue<Node> pqFrontier = null;  // Use for UCS
-        initialState = initialState1;
+        initialState = problem.getInitialState();
         String[] split = initialState.split(";");
-        bottleCapacity = Integer.parseInt(split[1]);
+        int bottleCapacity = problem.getBottleCapacity();
         // Initialize the frontier based on the search strategy
       
         if (strategy.equals("BF") || strategy.equals("DF")) {
@@ -159,7 +159,7 @@ public abstract class GenericSearch {
             int depthLimit = 0;  // Start with depth 0
             while (true) {
                 explored.clear();  // Clear explored set between depth limits
-                Node result = depthLimitedSearch(new Node(initialState, null, null, 0, 0), depthLimit);
+                Node result = depthLimitedSearch(new Node(initialState, null, null, 0, 0), depthLimit,problem);
                 if (result != null) {
                     return result;  // Return the solution if found
                 }
@@ -211,16 +211,17 @@ public abstract class GenericSearch {
 
             // Print the state for debugging purposes (optional)
             System.out.println(node.getState());
-            displayMemoryUsage("During search (current node: " + node.getState() + "):");
+           // displayMemoryUsage("During search (current node: " + node.getState() + "):");
             // Check if the goal state is reached
-            if (WaterSortSearch.isGoal(node.getState())) {
+            if (problem.isGoal(node.getState())) {
             	initialState="";
             	bottleCapacity=0;
-            	displayMemoryUsage("After goal is reached:");
+            	//displayMemoryUsage("After goal is reached:");
             	count =0;
+            	System.out.println("Goalllllllllllllllllllll"+node);
                 return node; // Goal reached
             }
-            List<Node> children = WaterSortSearch.expand(node);
+            List<Node> children = problem.expand(node);
             // Mark the state as explored
             explored.add(node.getState());
             if (strategy.equals("DF")) {
@@ -260,22 +261,7 @@ public abstract class GenericSearch {
 
         return null; // No solution found
     }
-    
-    public static String solve(String intialState,String Strategy,Boolean visualise) {
-    	 Node solution=search(intialState,Strategy,visualise);
-    	 if (solution != null) {
-    	        String path = String.join(",", solution.getPath());  // Join the path actions with arrows
-    	        int cost = solution.getCost();
-    	        int exploredSize = explored.size();
-    	        explored= new HashSet<>();
 
-    	        // Return a single string with values separated by semicolons
-    	        return path + "; " + cost + "; " + exploredSize;
-    	    } else {
-    	        // Return a message when no solution is found
-    	        return "No solution found with " + ".";
-    	    }
-    }
     public static int heuristic_AS2(Node node) {
         String state = node.getState();
         String[] bottles = state.split(";");
