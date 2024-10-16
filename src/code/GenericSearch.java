@@ -165,7 +165,16 @@ public abstract class GenericSearch {
                 }
                 depthLimit++;  // Increase the depth limit for the next iteration
             }
-        }else if (strategy.equals("GR1")) {
+        }
+        else if (strategy.startsWith("AS1")) { // For A* strategy
+            pqFrontier = new PriorityQueue<>(Comparator.comparingInt(node -> node.getCost() + heuristic_AS1(node)));
+            pqFrontier.add(new Node(initialState, null, null, 0, 0)); // Start with the initial state
+        }
+        else if (strategy.startsWith("AS2")) { // For A* strategy
+            pqFrontier = new PriorityQueue<>(Comparator.comparingInt(node -> node.getCost() + heuristic_AS2(node)));
+            pqFrontier.add(new Node(initialState, null, null, 0, 0)); // Start with the initial state
+        }
+        else if (strategy.equals("GR1")) {
             // Greedy Search using the combined heuristic (H1 + H2)
         	 pqFrontier = new PriorityQueue<>((node1, node2) -> {
                  // Compare nodes based on Heuristic 1
@@ -236,6 +245,14 @@ public abstract class GenericSearch {
                     }else if (strategy.equals("GR2")) {
                         pqFrontier.add(child);  // Greedy Search (Priority Queue based on combined heuristic)
                     }
+                    else if(strategy.equals("AS1")){
+                        pqFrontier.add(child); 
+
+                    }
+                    else if(strategy.equals("AS2")){
+                        pqFrontier.add(child); 
+
+                    }
                 }
                 
             }
@@ -259,5 +276,59 @@ public abstract class GenericSearch {
     	        return "No solution found with " + ".";
     	    }
     }
+    public static int heuristic_AS2(Node node) {
+        String state = node.getState();
+        String[] bottles = state.split(";");
+        int totalMisplacedLayers = 0;
+    
+        // Iterate over each bottle
+        for (String bottle : bottles) {
+            // Count how many layers are misplaced in this bottle
+            char[] layers = bottle.toCharArray();
+            char topColor = ' '; // This will hold the color of the top layer
+            boolean foundTopColor = false;
+    
+            // Count layers until we find an empty layer or the bottle is full
+            for (char c : layers) {
+                if (c == 'e') {
+                    // Once we hit an empty layer, stop counting
+                    break;
+                }
+                if (!foundTopColor) {
+                    // Set the top color for the first layer we encounter
+                    topColor = c;
+                    foundTopColor = true;
+                } else {
+                    // If the current layer is different from the top color, count it as misplaced
+                    if (c != topColor) {
+                        totalMisplacedLayers++;
+                    }
+                }
+            }
+        }
+        return totalMisplacedLayers; // Return the total number of misplaced layers
+    }
+    
+
+    public static int heuristic_AS1(Node node) {
+        String state = node.getState();
+        String[] bottles = state.split(";");
+    
+        int nonUniformBottles = 0;
+        for (String bottle : bottles) {
+            Set<Character> uniqueColors = new HashSet<>();
+            for (char c : bottle.toCharArray()) {
+                if (c != 'e') {  // Ignore empty layers
+                    uniqueColors.add(c);
+                }
+            }
+            // If the bottle contains more than one color, it is non-uniform
+            if (uniqueColors.size() > 1) {
+                nonUniformBottles++;
+            }
+        }
+        return nonUniformBottles; // Heuristic value is the number of non-uniform bottles
+    }
+    
 
 }
