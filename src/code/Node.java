@@ -38,7 +38,6 @@ public class Node {
     	return depth;
     }
 
-    // Trace the path back from the current node to the root (initial state)
     public List<String> getPath() {
         List<String> path = new ArrayList<>();
         Node currentNode = this;

@@ -5,96 +5,44 @@ import java.util.*;
 public abstract class GenericSearch {
     protected static String initialState ="";
     
-    public static  Set<String> explored = new HashSet<>();
+    public static  HashSet<String> explored = new HashSet<>();
     public static int count =0;
     public GenericSearch(String initialState) {
         this.initialState = initialState;
     }
 
-    // Abstract method to define the goal test
-   // public static boolean isGoal(String state) {
-		// TODO Auto-generated method stub
-		//return false;
-	//}
-
-    // Abstract method to generate possible successors from a given state
-    //public static List<Node> expand(Node node) {
-		// TODO Auto-generated method stub
-	//	return null;
-	//}
-
-    // Generic search method
-   /* public Node search(String strategy) {
-        Deque<Node> frontier = new LinkedList<>(); // Deque supports both stack and queue operations
-       
-        frontier.add(new Node(initialState, null, null, 0, 0)); // Start with the initial state
-        String[] split = initialState.split(";");
-        bottleCapacity=Integer.parseInt(split[1]);
-        while (!frontier.isEmpty()) {
-            Node node;
-            
-            if (strategy.equals("BFS")) {
-                // For BFS, treat the deque as a queue (FIFO): remove from the front
-                node = frontier.pollFirst(); 
-            } else if (strategy.equals("DFS")) {
-                // For DFS, treat the deque as a stack (LIFO): remove from the back
-                node = frontier.pollLast(); 
-            } else {
-                throw new IllegalArgumentException("Invalid strategy: " + strategy);
-            }
-            System.out.println(node.getState());
-            if (isGoal(node.getState())) {
-                return node; // Goal reached
-            }
-           
-            explored.add(node.getState());
-           // System.out.println(explored.size());
-            for (Node child : expand(node)) {
-                if (!explored.contains(child.getState())) {
-                    if (strategy.equals("BFS")) {
-                        // For BFS, add to the end (FIFO behavior)
-                        frontier.addLast(child);
-                    } else if (strategy.equals("DFS")) {
-                        // For DFS, add to the front (LIFO behavior)
-                        frontier.addLast(child);
-                    }
-                }
-            }
-        }
-        return null; // No solution found
-    }
-*/
  // Helper method for depth-limited DFS
     private static Node depthLimitedSearch(Node node, int limit,WaterSearchProblem problem) {
-        // Check if the current node is the goal
         if (problem.isGoal(node.getState())) {
-            return node; // Goal reached
+            return node; // Wesel el goal
         }
          if(node.getAction()==null) {
         	 explored.add(node.getState());
          }
-        // If depth limit is reached, return null
+        // Deptj limit
         if (node.getDepth() >= limit) {
             return null;
         }
 
-        // Expand the current node
+        // Expand node
         for (Node child : problem.expand(node)) {
             if (!explored.contains(child.getState())) {
-                explored.add(child.getState());  // Mark the child as explored
-                Node result = depthLimitedSearch(child, limit,problem);  // Recursive call with the same depth limit
+                explored.add(child.getState());
+                Node result = depthLimitedSearch(child, limit,problem); //Recurssion
                 if (result != null) {
-                    return result;  // Return the result if goal is found
+                    return result; 
                 }
             }
         }
-        return null; // Return null if no solution found at this depth
+        return null; // No solution at this depth
     }
+
+    //Mixed bottles
     private static int heuristic1(String state) {
         String[] bottles = state.split(";");
         int mixedBottles = 0;
         
-        for (int i = 0; i < bottles.length; i++) {  // Skip first two (bottle count, capacity)
+        for (int i = 0; i < bottles.length; i++) {  // Skip (bottle count, capacity)
             Set<Character> colors = new HashSet<>();
             for (char layer : bottles[i].toCharArray()) {
                 if (layer != 'e' && layer != ',') {
@@ -102,23 +50,25 @@ public abstract class GenericSearch {
                 }
             }
             if (colors.size() > 1) {
-                mixedBottles++;  // This bottle has more than one color
+                mixedBottles++;  // The bottle is mixed
             }
         }
         return mixedBottles;
     }
+
+    //Emptying
     private static int heuristic2(String state) {
         String[] bottles = state.split(";");
         int movesRequired = 0;
 
-        for (int i = 2; i < bottles.length; i++) {  // Skip first two (bottle count, capacity)
+        for (int i = 2; i < bottles.length; i++) { 
             Set<Character> colors = new HashSet<>();
             for (char layer : bottles[i].toCharArray()) {
                 if (layer != 'e' && layer != ',') {
                     colors.add(layer);
                 }
             }
-            // If more than one color, it will require moves to empty it
+            // more than one colour
             if (colors.size() > 1) {
                 movesRequired++;
             }
@@ -141,117 +91,112 @@ public abstract class GenericSearch {
 
     public static Node search(WaterSearchProblem problem,String strategy) {
     	// displayMemoryUsage("Before search starts:");
-        Deque<Node>  dequeFrontier = null;  // Use for BFS and DFS
-        PriorityQueue<Node> pqFrontier = null;  // Use for UCS
+        Deque<Node>  deque = null;  // Use for BFS and DFS
+        PriorityQueue<Node> PQ = null;  // Use for UCS
         initialState = problem.getInitialState();
         String[] split = initialState.split(";");
         int bottleCapacity = problem.getBottleCapacity();
         // Initialize the frontier based on the search strategy
       
         if (strategy.equals("BF") || strategy.equals("DF")) {
-            dequeFrontier = new LinkedList<>();
-            dequeFrontier.add(new Node(initialState, null, null, 0, 0)); // Start with the initial state
+            deque = new LinkedList<>();
+            deque.add(new Node(initialState, null, null, 0, 0));
         } else if (strategy.equals("UC")) {
-            pqFrontier = new PriorityQueue<>(Comparator.comparingInt(Node::getCost));
-            pqFrontier.add(new Node(initialState, null, null, 0, 0)); // Start with the initial state
+            PQ = new PriorityQueue<>(Comparator.comparingInt(Node::getCost));
+            PQ.add(new Node(initialState, null, null, 0, 0));
         }   else if (strategy.equals("ID")) {
-            // For IDS, we'll repeatedly run depth-limited search with increasing depth
-            int depthLimit = 0;  // Start with depth 0
+            //IDS
+            int depthLimit = 0;  //depth 0
             while (true) {
-                explored.clear();  // Clear explored set between depth limits
+                explored.clear(); //Heree
                 Node result = depthLimitedSearch(new Node(initialState, null, null, 0, 0), depthLimit,problem);
                 if (result != null) {
-                    return result;  // Return the solution if found
+                    return result; 
                 }
-                depthLimit++;  // Increase the depth limit for the next iteration
+                depthLimit++;  // Increase depth
             }
         }
-        else if (strategy.startsWith("AS1")) { // For A* strategy
-            pqFrontier = new PriorityQueue<>(Comparator.comparingInt(node -> node.getCost() + heuristic_AS1(node)));
-            pqFrontier.add(new Node(initialState, null, null, 0, 0)); // Start with the initial state
+        else if (strategy.startsWith("AS1")) { // A* 1
+            PQ = new PriorityQueue<>(Comparator.comparingInt(node -> node.getCost() + heuristic_AS1(node)));
+            PQ.add(new Node(initialState, null, null, 0, 0)); 
         }
-        else if (strategy.startsWith("AS2")) { // For A* strategy
-            pqFrontier = new PriorityQueue<>(Comparator.comparingInt(node -> node.getCost() + heuristic_AS2(node)));
-            pqFrontier.add(new Node(initialState, null, null, 0, 0)); // Start with the initial state
+        else if (strategy.startsWith("AS2")) { //A* 2
+            PQ = new PriorityQueue<>(Comparator.comparingInt(node -> node.getCost() + heuristic_AS2(node)));
+            PQ.add(new Node(initialState, null, null, 0, 0)); 
         }
         else if (strategy.equals("GR1")) {
-            // Greedy Search using the combined heuristic (H1 + H2)
-        	 pqFrontier = new PriorityQueue<>((node1, node2) -> {
-                 // Compare nodes based on Heuristic 1
+        	 PQ = new PriorityQueue<>((node1, node2) -> {
+                //editedd
                  return Integer.compare(heuristic1(node1.getState()), heuristic1(node2.getState()));
              });
-            pqFrontier.add(new Node(initialState, null, null, 0, 0)); // Start with the initial state
+            PQ.add(new Node(initialState, null, null, 0, 0)); 
         } else if (strategy.equals("GR2")) {
-            // Greedy Search using the combined heuristic (H1 + H2)
-        	 pqFrontier = new PriorityQueue<>((node1, node2) -> {
-                 // Compare nodes based on Heuristic 1
+        	 PQ = new PriorityQueue<>((node1, node2) -> {
+                //hr2
                  return Integer.compare(heuristic2(node1.getState()), heuristic2(node2.getState()));
              });
-            pqFrontier.add(new Node(initialState, null, null, 0, 0)); // Start with the initial state
+            PQ.add(new Node(initialState, null, null, 0, 0));
         } 
         else {
             throw new IllegalArgumentException("Invalid strategy: " + strategy);
         }
-
-        // Extract bottle capacity from the initial state
       
 
         // Main search loop
-        while ((dequeFrontier != null && !dequeFrontier.isEmpty()) || (pqFrontier != null && !pqFrontier.isEmpty())) {
+        while ((deque != null && !deque.isEmpty()) || (PQ != null && !PQ.isEmpty())) {
             Node node;
 
-            // Select the node based on the strategy
+            //Select node
+
             if (strategy.equals("BF")) {
-                node = dequeFrontier.pollFirst(); // For BFS, remove from the front (FIFO)
+                node = deque.pollFirst(); // BFS = Fifo
             } else if (strategy.equals("DF")) {
-                node = dequeFrontier.pollFirst(); // For DFS, remove from the back (LIFO)
+                node = deque.pollFirst(); // DFS = LIFO
             } else {
-                node = pqFrontier.poll(); // For UCS, remove the lowest cost node
+                node = PQ.poll();
             }
 
-            // Print the state for debugging purposes (optional)
             System.out.println(node.getState());
            // displayMemoryUsage("During search (current node: " + node.getState() + "):");
-            // Check if the goal state is reached
+            
+            explored.add(node.getState());
+
             if (problem.isGoal(node.getState())) {
             	initialState="";
             	bottleCapacity=0;
             	//displayMemoryUsage("After goal is reached:");
             	count =0;
             	System.out.println("Goalllllllllllllllllllll"+node);
-                return node; // Goal reached
+                return node;
             }
             List<Node> children = problem.expand(node);
-            // Mark the state as explored
-            explored.add(node.getState());
             if (strategy.equals("DF")) {
-                // For DFS, add children to the front of the deque in reverse order
+                //reverse
                 for (int i = children.size() - 1; i >= 0; i--) {
                     Node child = children.get(i);
                     if (!explored.contains(child.getState())) {
-                        dequeFrontier.addFirst(child);  // Add to the front for DFS (LIFO)
+                        deque.addFirst(child); 
                     }
                 }
             }
-            // Expand the node and add its children to the frontier
             for (Node child : children) {
                 if (!explored.contains(child.getState())) {
-                    // Add the child to the frontier based on the strategy
                     if (strategy.equals("BF")) {
-                        dequeFrontier.addLast(child);  // BFS (FIFO behavior)
+                        deque.addLast(child);
                     } else  if(strategy.equals("UC")){
-                        pqFrontier.add(child);  // UCS (Priority Queue behavior)
+                        PQ.add(child);
                     }else if (strategy.equals("GR1")) {
-                        pqFrontier.add(child);  // Greedy Search (Priority Queue based on combined heuristic)
+                        PQ.add(child); 
                     }else if (strategy.equals("GR2")) {
-                        pqFrontier.add(child);  // Greedy Search (Priority Queue based on combined heuristic)
+                        PQ.add(child);
                     }
                     else if(strategy.equals("AS1")){
-                        pqFrontier.add(child); 
+                        PQ.add(child); 
+
 
                     }
                     else if(strategy.equals("AS2")){
-                        pqFrontier.add(child); 
+                        PQ.add(child); 
 
                     }
                 }
@@ -259,7 +204,7 @@ public abstract class GenericSearch {
             }
         }
 
-        return null; // No solution found
+        return null; // No solution
     }
 
     public static int heuristic_AS2(Node node) {
@@ -267,35 +212,29 @@ public abstract class GenericSearch {
         String[] bottles = state.split(";");
         int totalMisplacedLayers = 0;
     
-        // Iterate over each bottle
         for (String bottle : bottles) {
-            // Count how many layers are misplaced in this bottle
             char[] layers = bottle.toCharArray();
-            char topColor = ' '; // This will hold the color of the top layer
+            char topColor = ' ';
             boolean foundTopColor = false;
     
-            // Count layers until we find an empty layer or the bottle is full
             for (char c : layers) {
                 if (c == 'e') {
-                    // Once we hit an empty layer, stop counting
                     break;
                 }
                 if (!foundTopColor) {
-                    // Set the top color for the first layer we encounter
                     topColor = c;
                     foundTopColor = true;
                 } else {
-                    // If the current layer is different from the top color, count it as misplaced
                     if (c != topColor) {
                         totalMisplacedLayers++;
                     }
                 }
             }
         }
-        return totalMisplacedLayers; // Return the total number of misplaced layers
+        return totalMisplacedLayers;
     }
     
-
+    //non uniform
     public static int heuristic_AS1(Node node) {
         String state = node.getState();
         String[] bottles = state.split(";");
@@ -304,16 +243,15 @@ public abstract class GenericSearch {
         for (String bottle : bottles) {
             Set<Character> uniqueColors = new HashSet<>();
             for (char c : bottle.toCharArray()) {
-                if (c != 'e') {  // Ignore empty layers
+                if (c != 'e') {
                     uniqueColors.add(c);
                 }
             }
-            // If the bottle contains more than one color, it is non-uniform
             if (uniqueColors.size() > 1) {
                 nonUniformBottles++;
             }
         }
-        return nonUniformBottles; // Heuristic value is the number of non-uniform bottles
+        return nonUniformBottles;
     }
     
 
