@@ -14,7 +14,7 @@ public class WaterSortSearch {
                String path = String.join(",", solution.getPath());
                int cost = solution.getCost();
                int exploredSize = GenericSearch.explored.size();
-               GenericSearch.explored= new HashSet<>();
+               GenericSearch.explored= new HashSet();
                  System.out.println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
                
 
@@ -39,13 +39,15 @@ public class WaterSortSearch {
         String initialState = "5;4;b,y,r,b;b,y,r,r;y,r,b,y;e,e,e,e;e,e,e,e;";
        // String initialState = "5;4;e,e,e,e;r,r,r,r;e,e,b,y;e,b,b,b;e,y,y,y;";
        // String initialState ="3;4;r,y,r,y;y,r,y,r;e,e,e,e;";
-      //  String initialState ="3;3;r,g,r;g,r,g;e,e,e";
+     // String initialState ="3;3;y,g,r;e,b,b;e,y,b;";
+      
       
 
         // Test BFS
-        String solution = WaterSortSearch.solve(initialState, "DF", true);
+        String solution = WaterSortSearch.solve(initialState, "GR2", true);
         System.out.println(solution);
-
+       // GenericSearch.displayMemoryUsage();
+        
         
        //Node solution = waterSortSearch.bfs();
        // Node solution = waterSortSearch.dfs();

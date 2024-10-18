@@ -1,11 +1,15 @@
 package code;
-
+import com.sun.management.OperatingSystemMXBean;
 import java.util.*;
+import java.lang.management.ManagementFactory;
 
 public abstract class GenericSearch {
+    static OperatingSystemMXBean osBean = ManagementFactory.getPlatformMXBean(
+        OperatingSystemMXBean.class);
     protected static String initialState ="";
     
-    public static  HashSet<String> explored = new HashSet<>();
+     public static  HashSet<String> explored = new HashSet<>();
+    // public static ArrayList<String> explored=new ArrayList<>();
     public static int count =0;
     public GenericSearch(String initialState) {
         this.initialState = initialState;
@@ -14,6 +18,8 @@ public abstract class GenericSearch {
  // Helper method for depth-limited DFS
     private static Node depthLimitedSearch(Node node, int limit,WaterSearchProblem problem) {
         if (problem.isGoal(node.getState())) {
+            displayMemoryUsage("After goal is reached:");
+
             return node; // Wesel el goal
         }
          if(node.getAction()==null) {
@@ -86,11 +92,12 @@ public abstract class GenericSearch {
         System.out.println("Used memory: " + usedMemory / (1024 * 1024) + " MB");
         System.out.println("Free memory: " + freeMemory / (1024 * 1024) + " MB");
         System.out.println("Total memory: " + totalMemory / (1024 * 1024) + " MB");
+        System.out.print("CPU Usage:" + osBean.getProcessCpuLoad());
         System.out.println("------------------------------------");
     }
 
     public static Node search(WaterSearchProblem problem,String strategy) {
-    	// displayMemoryUsage("Before search starts:");
+        displayMemoryUsage("Before search starts:");
         Deque<Node>  deque = null;  // Use for BFS and DFS
         PriorityQueue<Node> PQ = null;  // Use for UCS
         initialState = problem.getInitialState();
@@ -156,15 +163,15 @@ public abstract class GenericSearch {
                 node = PQ.poll();
             }
 
-            System.out.println(node.getState());
-           // displayMemoryUsage("During search (current node: " + node.getState() + "):");
+           // System.out.println(node.getState());
+           //displayMemoryUsage("During search (current node: " + node.getState() + "):");
             
             explored.add(node.getState());
 
             if (problem.isGoal(node.getState())) {
             	initialState="";
             	bottleCapacity=0;
-            	//displayMemoryUsage("After goal is reached:");
+            	displayMemoryUsage("After goal is reached:");
             	count =0;
             	System.out.println("Goalllllllllllllllllllll"+node);
                 return node;
@@ -176,11 +183,13 @@ public abstract class GenericSearch {
                     Node child = children.get(i);
                     if (!explored.contains(child.getState())) {
                         deque.addFirst(child); 
+
                     }
                 }
             }
             for (Node child : children) {
                 if (!explored.contains(child.getState())) {
+
                     if (strategy.equals("BF")) {
                         deque.addLast(child);
                     } else  if(strategy.equals("UC")){
@@ -199,7 +208,7 @@ public abstract class GenericSearch {
                         PQ.add(child); 
 
                     }
-                }
+               }
                 
             }
         }
